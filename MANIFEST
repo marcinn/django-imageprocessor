@@ -1,0 +1,6 @@
+setup.py
+src/marcinnowak/__init__.py
+src/marcinnowak/imageprocess/Filters.py
+src/marcinnowak/imageprocess/Image.py
+src/marcinnowak/imageprocess/__init__.py
+src/marcinnowak/imageprocess/helpers.py

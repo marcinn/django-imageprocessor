@@ -15,6 +15,8 @@ class ThumbnailUrlNode(Node):
         resolved_options = dict(zip(self.options.keys(), [self.options[v].resolve(context) for v in self.options]))
         size = [int(z.resolve(context)) for z in self.size]
         path = str(self.path.resolve(context))
+        if not path:
+            raise TemplateSyntaxError('Provided image path is empty')
         if not os.path.isabs(path):
             path = os.path.join(settings.MEDIA_ROOT, path)
         return helpers.thumbnail_url(path, size)

@@ -110,8 +110,10 @@ CACHE_DIR = '/tmp/'
 """ cached image class """
 class CachedImage(Image):
 
-    cache_dir = CACHE_DIR
-    cached = False
+    def __init__(self, *args, **kwargs):
+        super(CachedImage, self).__init__(*args, **kwargs)
+        self.cache_dir = CACHE_DIR
+        self.cached = False
 
     def render(self):
         cache = os.path.join( self.cache_dir, str(md5.new(self.filename + str(os.path.getsize(self.filename)) + self.filters.mkhash() + self.filename).hexdigest()) )

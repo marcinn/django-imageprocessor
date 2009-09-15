@@ -80,6 +80,7 @@ class Image(object):
             if not self.filename:
                 raise 'Image file not selected'
             img = _pImage.open(self.filename)
+            self.transparency = img.info.get('transparency', None)
             for filter_instance, args, kwargs in self.filters:
                 result = filter_instance(img, *args, **kwargs)
                 # some filters returns a copy of an image, so check it
@@ -97,7 +98,10 @@ class Image(object):
             outfile = self.filename
 
         self.filename = outfile
-        self.rendered_image.save(outfile, format=self.rendered_image.format)
+        if self.transparency:
+            self.rendered_image.save(outfile, format=self.rendered_image.format, transparency=self.transparency)
+        else:
+            self.rendered_image.save(outfile, format=self.rendered_image.format)
         return self
 
     def __str__(self):

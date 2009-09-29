@@ -120,7 +120,9 @@ class CachedImage(Image):
         self.cached = False
 
     def render(self):
-        cache = os.path.join( self.cache_dir, str(md5.new(self.filename + str(os.path.getsize(self.filename)) + self.filters.mkhash() + self.filename).hexdigest()) )
+	filename = str(md5.new(self.filename + str(os.path.getsize(self.filename)) + self.filters.mkhash() + self.filename).hexdigest())
+	filename += os.path.splitext(self.filename)[1]
+        cache = os.path.join(self.cache_dir, filename)
         if os.path.exists(cache):
             self.cached = True
             self.filename = cache

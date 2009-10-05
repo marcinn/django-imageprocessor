@@ -23,6 +23,7 @@ from PIL import Image as _pImage
 import md5
 import UserList
 import os
+import settings
 
 # available filters
 
@@ -90,7 +91,7 @@ class Image(object):
             self.rendered_image = img
         return self
 
-    def save(self, outfile=None):
+    def save(self, outfile=None, quality=None):
         if not self.rendered_image:
             self.render()
 
@@ -98,10 +99,16 @@ class Image(object):
             outfile = self.filename
 
         self.filename = outfile
+        kwargs = {
+                'format':self.rendered_image.format,
+                }
+
         if self.transparency:
-            self.rendered_image.save(outfile, format=self.rendered_image.format, transparency=self.transparency)
-        else:
-            self.rendered_image.save(outfile, format=self.rendered_image.format)
+            kwargs['transparency']=self.transparency
+        if self.rendered_image.format == 'JPEG':
+            kwargs['quality'] = quality or settings.JPEG_QUALITY
+
+        self.rendered_image.save(outfile, **kwargs)
         return self
 
     def __str__(self):
@@ -120,7 +127,7 @@ class CachedImage(Image):
         self.cached = False
 
     def render(self):
-        cache = os.path.join( self.cache_dir, str(md5.new(self.filename + str(os.path.getsize(self.filename)) + self.filters.mkhash() + self.filename).hexdigest()) )
+        cache = os.path.join( self.cache_dir, str(str(settings.JPEG_QUALITY) + md5.new(self.filename + str(os.path.getsize(self.filename)) + self.filters.mkhash() + self.filename).hexdigest()) )
         if os.path.exists(cache):
             self.cached = True
             self.filename = cache

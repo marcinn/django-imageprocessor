@@ -19,7 +19,10 @@ class ThumbnailUrlNode(Node):
             raise TemplateSyntaxError('Provided image path is empty')
         if not os.path.isabs(path):
             path = os.path.join(settings.MEDIA_ROOT, path)
-        return helpers.thumbnail_url(path, size)
+        try:
+            return helpers.thumbnail_url(path, size)
+        except IOError:
+            return None
 
 
 @register.tag(name='thumbnail_url')

@@ -49,12 +49,12 @@ class ImageFilters(UserList.UserList):
 """ Base image class """
 class Image(object):
     
-    filters = ImageFilters()
-    filename = None
-    rendered_image = None
 
-    def __init__(self,filename=None):
+    def __init__(self,filename=None,quality=None):
         self.load(filename)
+        self.rendered_image = None
+        self.filters = ImageFilters()
+        self.quality = quality or settings.JPEG_QUALITY
 
     def load(self,file):
         self.filename = file
@@ -91,7 +91,7 @@ class Image(object):
             self.rendered_image = img
         return self
 
-    def save(self, outfile=None, quality=None):
+    def save(self, outfile=None):
         if not self.rendered_image:
             self.render()
 
@@ -106,7 +106,7 @@ class Image(object):
         if self.transparency:
             kwargs['transparency']=self.transparency
         if self.rendered_image.format == 'JPEG':
-            kwargs['quality'] = quality or settings.JPEG_QUALITY
+            kwargs['quality'] = self.quality 
 
         self.rendered_image.save(outfile, **kwargs)
         return self
@@ -127,7 +127,7 @@ class CachedImage(Image):
         self.cached = False
 
     def render(self):
-	filename = str(md5.new(str(settings.JPEG_QUALITY) + self.filename + str(os.path.getsize(self.filename)) + self.filters.mkhash() + self.filename).hexdigest())
+	filename = str(md5.new(str(self.quality) + self.filename + str(os.path.getsize(self.filename)) + self.filters.mkhash() + self.filename).hexdigest())
 	filename += os.path.splitext(self.filename)[1]
         cache = os.path.join(self.cache_dir, filename)
         if os.path.exists(cache):

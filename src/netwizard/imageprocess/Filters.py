@@ -2,14 +2,15 @@
 
 import Image 
 
-""" Simply use PIL image funcs """
+# Common PIL filters
 
 from PIL import Image as _pImage
 
 Image.register_filter('rotate',     _pImage.Image.rotate)       # use built-in func as rotate filter
 Image.register_filter('thumbnail',  _pImage.Image.thumbnail)    # use built-in func as thumbnail filter
 
-""" PIL`s common enhance wrappers """
+# PIL`s common enhance wrappers
+
 from PIL import ImageEnhance
 
 def grayscale(image, *args, **kwargs):
@@ -18,7 +19,8 @@ def grayscale(image, *args, **kwargs):
 Image.register_filter('grayscale', grayscale)
 
 
-""" PIL`s common channel operations """
+# PIL`s common channel operations
+
 from PIL import ImageChops
 
 Image.register_filter('invert', ImageChops.invert)
@@ -30,3 +32,7 @@ Image.register_filter('blend', ImageChops.blend)
 Image.register_filter('composite', ImageChops.composite)
 
 
+# custom filters
+
+def watermark(image, watermark, position=('right', 'bottom'), **kwargs):
+    pass

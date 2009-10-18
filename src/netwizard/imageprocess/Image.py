@@ -23,7 +23,6 @@ from PIL import Image as _pImage
 import md5
 import UserList
 import os
-import settings
 
 # available filters
 
@@ -48,9 +47,10 @@ class ImageFilters(UserList.UserList):
 
 """ Base image class """
 class Image(object):
-    
+
 
     def __init__(self,filename=None,quality=None):
+        import settings
         self.load(filename)
         self.rendered_image = None
         self.filters = ImageFilters()
@@ -61,14 +61,11 @@ class Image(object):
         self.filters = ImageFilters()
         return self
 
-    def add_filter(self, name, *args, **kwargs):
-       if filters.has_key(name):
-           return self.process(filters[name], *args, **kwargs)
-       raise AttributeError("Unknown filter %s." % name)
-
     def __getattr__(self, attr):
         def callable(*args, **kwargs):
-            return self.add_filter(attr, *args, **kwargs)
+            if filters.has_key(attr):
+                return self.process(filters[attr], *args, **kwargs)
+            raise AttributeError("Unknown filter %s." % attr)
         return callable
 
     def process(self, filter_instance, *args, **kwargs):
@@ -92,13 +89,14 @@ class Image(object):
         return self
 
     def save(self, outfile=None):
+
         if not self.rendered_image:
             self.render()
 
         if not outfile:
             outfile = self.filename
 
-        self.filename = outfile
+        self.filename = outfile 
         kwargs = {
                 'format':self.rendered_image.format,
                 }
@@ -125,17 +123,36 @@ class CachedImage(Image):
         super(CachedImage, self).__init__(*args, **kwargs)
         self.cache_dir = CACHE_DIR
         self.cached = False
+        self.cache_file = None # output filename
+
+    def save(self, outfile=None):
+        autocache_file = self._get_cache_file()
+        outfile = outfile or autocache_file
+        self.cache_file = outfile
+        if not self.rendered_image:
+            self.render()
+        if (self.cached and autocache_file != outfile) or not self.cached:
+            return super(CachedImage, self).save(outfile=outfile)
+        self.filename = self.cache_file
+        return self
+
+    def _get_cache_file(self):
+        filename = str(md5.new(str(self.quality) + self.filename + str(os.path.getsize(self.filename)) + self.filters.mkhash() + self.filename).hexdigest())
+        filename += os.path.splitext(self.filename)[1]
+        return os.path.join(self.cache_dir, filename)
 
     def render(self):
-	filename = str(md5.new(str(self.quality) + self.filename + str(os.path.getsize(self.filename)) + self.filters.mkhash() + self.filename).hexdigest())
-	filename += os.path.splitext(self.filename)[1]
-        cache = os.path.join(self.cache_dir, filename)
-        if os.path.exists(cache):
+        if not self.cache_file:
+            """
+            rendering cached image firstly checks for already generated image
+            but if output filename is not set, render should fail
+            """
+            raise RuntimeError('Cache filename not set. Cannot render.')
+
+        if os.path.exists(self.cache_file):
             self.cached = True
-            self.filename = cache
-            self.rendered_image = _pImage.open(self.filename)
+            self.rendered_image = _pImage.open(self.cache_file)
             return self
+
         self.cached = False
-        result = super(CachedImage,self).render()
-        self.save(cache)
-        return result
+        return super(CachedImage,self).render()

@@ -11,3 +11,7 @@ THUMBNAIL_PRE_FILTERS = getattr(settings, 'THUMBNAIL_PRE_FILTERS', [])
 THUMBNAIL_POST_FILTERS = getattr(settings, 'THUMBNAIL_POST_FILTERS', [])
 
 JPEG_QUALITY = getattr(settings, 'IMAGEPROCESS_JPEG_QUALITY', 75)
+
+PRESETS_ROOT = getattr(settings, 'IMAGEPROCESS_PRESETS_ROOT', os.path.join(settings.MEDIA_ROOT, 'presets'))
+PRESETS_PREFIX = getattr(settings, 'IMAGEPROCESS_PRESETS_PREFIX', 'presets')
+

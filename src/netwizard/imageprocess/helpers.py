@@ -2,6 +2,7 @@
 
 from Image import CachedImage
 from PIL import Image as PILImage
+from presets import library, get_preset_image
 import settings
 import os
 
@@ -18,8 +19,14 @@ def thumbnail_url(file, size, filters=None, **opts):
     for (filter_name, args, kwargs) in filters:
         if not kwargs:
             kwargs = {}
-        thumb.add_filter( filter_name, *args, **kwargs )
+        getattr(thumb, filter_name)(*args, **kwargs)
     return u'%s%s' % (
             settings.THUMBNAIL_CACHE_PREFIX, 
-            os.path.basename(thumb.render().filename)
+            os.path.basename(thumb.save().filename)
             )
+
+def url_from_preset(file, preset_name):
+    image = get_preset_image(file, preset_name)
+    return u'%s/%s/%s' % (settings.PRESETS_PREFIX, image.preset_name, 
+            os.path.basename(image.filename))
+

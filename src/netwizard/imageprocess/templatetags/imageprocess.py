@@ -47,3 +47,7 @@ def thumbnail_url(parser, token):
 
     return ThumbnailUrlNode(file, (width, height), options)
 
+
+@register.simple_tag
+def image_from_preset(file, preset):
+    return helpers.url_from_preset(os.path.join(settings.MEDIA_ROOT, str(file)), str(preset))

@@ -1,16 +1,21 @@
 from netwizard.imageprocess.presets import get_preset_image
+from PIL import Image
 from netwizard.imageprocess import settings
-from netwizard.imageprocess.processors import CachedImageProcessor
+from netwizard.imageprocess.cache import ImageCache
+from netwizard.imageprocess.processors import ImageProcessor
 from django.template import Library, Node, TemplateSyntaxError
 import os
 
 register = Library()
+
+
 
 class ThumbnailUrlNode(Node):
     def __init__(self, path, size, options):
         self.path = path
         self.size = size
         self.options = options
+        self.thumbnails_cache = ImageCache(settings.THUMBNAIL_ROOT)
 
     def render(self, context):
         resolved_options = dict(zip([str(opt) for opt in self.options.keys()], [self.options[v].resolve(context) for v in self.options]))
@@ -21,9 +26,10 @@ class ThumbnailUrlNode(Node):
         if not os.path.isabs(path):
             path = os.path.join(settings.MEDIA_ROOT, path)
         try:
+            processor = ImageProcessor()
+            processor.add_filter(Image.Image.thumbnail, size, resample=Image.ANTIALIAS)
             return '%s%s' % (settings.THUMBNAIL_PREFIX, os.path.basename(
-                CachedImageProcessor(path, output_dir=settings.THUMBNAIL_ROOT).thumbnail(size, \
-                    **resolved_options).save().filename))
+                self.thumbnails_cache.get_image_file(processor, path)))
         except IOError:
             return None
 

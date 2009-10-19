@@ -21,13 +21,6 @@ from filters import library
 import hashlib
 import os
 
-def make_filters_hash(filters):
-    result = hashlib.md5()
-    for filter, args, kwargs in filters:
-        result.update(filter.__name__)
-        result.update(str(args))
-        result.update(str(kwargs))
-    return result.hexdigest()
 
 class ImageProcessor(object):
     """
@@ -35,40 +28,26 @@ class ImageProcessor(object):
     rendering is executed after first call of render() or save() methods
     """
 
-    def __init__(self, filename, output_dir=None, quality=75, filters_registry=None):
+    def __init__(self, output_dir=None, quality=75):
         """
         initializes processor for image file
-        you can also set output quality (JPEG) and custom filters registry
+        you can also set output quality (JPEG)
         """
         
         self.output_dir = output_dir
-        self.open(filename)
+        self.rendered_image = None
         self.quality = quality 
-        self.filters_registry = filters_registry or library
+        self.filters = []
 
-    def open(self, filename):
+    def process(self, filename):
         """
-        sets source image filename
-        clears processor state
+        sets source image filename for processing
         """
         self.filename = filename
-        self.filters = []
+        self.rendered_image = None
         return self
 
-    def __getattr__(self, attr):
-        """
-        wrapper for easy accessing filters from registry used
-        with this processor instance
-        """
-        def callable(*args, **kwargs):
-            try:
-                return self.process(
-                        self.filters_registry.get(attr), *args, **kwargs)
-            except KeyError:
-                raise AttributeError("Unknown filter %s." % attr)
-        return callable
-
-    def process(self, filter_instance, *args, **kwargs):
+    def add_filter(self, filter_instance, *args, **kwargs):
         """
         adds filter with paramters to filters queue
         """
@@ -125,10 +104,6 @@ class ImageProcessor(object):
 
         self.rendered_image.save(outfile, **kwargs)
         return self
-
-    def __str__(self):
-        self.render()
-        return self.rendered_image.tostring()
 
 
 class CachedImageProcessor(ImageProcessor):

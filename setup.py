@@ -1,15 +1,13 @@
 from setuptools import setup, find_packages
 
-setup(name='netwizard-imageprocess',
-        version='1.0',
-        description='High-level layer for image processing using PIL',
+setup(name='django-imageprocessor',
+        version='0.3',
+        description='Batch image processing for Django with presets and cache support',
         author='Marcin Nowak',
         author_email='marcin.j.nowak@gmail.com',
-        packages=find_packages('src'),
-        namespace_packages=['netwizard'],
-        package_dir = {
-            'netwizard': 'src/netwizard',
-            }
-
+        url='http://github.com/marcinn/django-imageprocess',
+        packages=find_packages(),
+        include_package_data=True,
+        zip_safe=False,
         )
 

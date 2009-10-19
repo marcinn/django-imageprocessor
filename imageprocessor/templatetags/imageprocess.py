@@ -1,8 +1,7 @@
-from netwizard.imageprocess.presets import get_preset
+from imageprocessor.presets import get_preset
 from PIL import Image
-from netwizard.imageprocess import settings
-from netwizard.imageprocess.cache import ImageCache
-from netwizard.imageprocess.processors import ImageProcessor
+from imageprocessor import settings, ImageProcessor
+from imageprocessor.cache import ImageCache
 from django.template import Library, Node, TemplateSyntaxError
 import os
 

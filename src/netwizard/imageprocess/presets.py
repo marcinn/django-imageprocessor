@@ -1,13 +1,20 @@
 """
-Image presets presets module
-author: Marcin Nowak (marcin.j.nowak@gmail.com)
+batch processing presets
+
+@author: Marcin Nowak (marcin.j.nowak@gmail.com)
 """
 
 import os
 from cache import ImageCache
 
 class Preset(object):
+    """
+    represents named preset
+    """
     def __init__(self, name, processor, cached=False, output_dir=None):
+        """
+        initializes preset with processor, optional cache support
+        """
         self.name = name
         self.cached = cached
         self._output_dir = output_dir
@@ -16,12 +23,18 @@ class Preset(object):
 
     @property
     def cache(self):
+        """
+        returns image cache instance
+        """
         if self.cached and not self._cache:
             self._cache = ImageCache(self.output_dir)
         return self._cache
 
     @property
     def output_dir(self):
+        """
+        returs output dir
+        """
         if not self._output_dir:
             import settings
             self._output_dir = os.path.join(settings.PRESETS_ROOT, self.name)
@@ -33,17 +46,23 @@ class Preset(object):
         return os.path.join(self.output_dir, 
                 os.path.basename(source))
 
-    def get_image(self, file):
+    def get_image(self, source_file):
+        """
+        returns processed PIL Image instance for specified source file
+        """
         if self.cached:
-            return self.cache.get_image(self.processor, file,
-                   self._compute_dest_path(file))
-        return self.processor.process(file).save(self._compute_dest_path(file))
+            return self.cache.get_image(self.processor, source_file,
+                   self._compute_dest_path(source_file))
+        return self.processor.process(source_file).save(self._compute_dest_path(source_file))
         
-    def get_image_file(self, file):
+    def get_image_file(self, source_file):
+        """
+        returns processed image path for specified source file
+        """
         if self.cached:
-            return self.cache.get_image_file(self.processor, file,
-                    self._compute_dest_path(file))
-        return self.processor.process(file).save(self._compute_dest_path(file)).filename
+            return self.cache.get_image_file(self.processor, source_file,
+                    self._compute_dest_path(source_file))
+        return self.processor.process(source_file).save(self._compute_dest_path(source_file)).filename
 
 
 class PresetsRegistry(object):
@@ -90,13 +109,23 @@ class PresetsRegistry(object):
         return self.presets[name]
 
 
-__default_presets = PresetsRegistry()
+# default presets
+__DEFAULT_PRESETS = PresetsRegistry()
 
 def create_preset(name, processor, cached=True, output_dir=None):
-    __default_presets.register_once(name, Preset(name, processor, cached=cached, output_dir=output_dir))
+    """
+    wrapper for easy presets creating and registering
+    """
+    __DEFAULT_PRESETS.register_once(name, Preset(name, processor, cached=cached, output_dir=output_dir))
 
 def remove_preset(name):
-    __default_presets.unregister(name)
+    """
+    wrapper for easy presets removing
+    """
+    __DEFAULT_PRESETS.unregister(name)
 
 def get_preset(name):
-    return __default_presets.get(name)
+    """
+    wrapped for easy preset access
+    """
+    return __DEFAULT_PRESETS.get(name)

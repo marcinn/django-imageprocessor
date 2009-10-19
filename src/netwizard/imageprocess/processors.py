@@ -1,19 +1,7 @@
-""" Easy image processing library using PIL """
-
 """
-example usage:
+@author: Marcin Nowak (marcin.j.nowak@gmail.com)
 
-    img = CachedImageProcessor('/tmp/my_image.png').thumbnail([120,80]).grayscale().render()
-    img.save('/tmp/processed_image.png')
-    print img.filename  # get output filename
-    print img   # string (raw) representation
-
-    change cache dir:
-
-    img = CachedImageProcessor('/tmp/my_image.png').thumbnail([120,80]).grayscale()
-    img.cache_dir = '/tmp/cache/'
-    print img.render().filename     # cached file path
-
+module provides ImageProcessor class for batch processing images
 """
 
 from PIL import Image 
@@ -104,3 +92,9 @@ class ImageProcessor(object):
         return self
 
 
+
+def filter_spec(filter_instance, *args, **kwargs):
+    """
+    helper for easy adding filters as init arg for processor
+    """
+    return (filter_instance, args, kwargs)

@@ -1,66 +1,52 @@
 """
-Image presets module
+Image presets presets module
 author: Marcin Nowak (marcin.j.nowak@gmail.com)
 """
 
 import os
+from cache import ImageCache
 
 class Preset(object):
-    """
-    Preset instance represents image rendering settings
-    and optional output place
-    """
+    def __init__(self, name, processor, cached=False, output_dir=None):
+        self.name = name
+        self.cached = cached
+        self._output_dir = output_dir
+        self._cache = None
+        self.processor = processor
 
-    def __init__(self, image_processor, filters=None, \
-            output_dir=None, file_pattern=None, quality=None):
-        """
-        initializes preset with specified image processor class,
-        filters set, quality, and output file settings
-        """
-        self.filters = filters
-        self.image_processor = image_processor
-        self.output_dir = output_dir
-        self.file_pattern = file_pattern
-        self.quality = quality
+    @property
+    def cache(self):
+        if self.cached and not self._cache:
+            self._cache = ImageCache(self.output_dir)
+        return self._cache
 
-    def __repr__(self):
-        return '[%s], %d filters, output=%s' % (self.image_processor,
-                len(self.filters), os.path.join(self.output_dir,
-                    self.file_pattern))
-            
+    @property
+    def output_dir(self):
+        if not self._output_dir:
+            import settings
+            self._output_dir = os.path.join(settings.PRESETS_ROOT, self.name)
+            if not os.path.isdir(self._output_dir):
+                os.makedirs(self._output_dir, 0777)
+        return self._output_dir
 
+    def _compute_dest_path(self, source):
+        return os.path.join(self.output_dir, 
+                os.path.basename(source))
 
-def get_preset_image(filename, preset_name):
-    """
-    returns image instance created from file and
-    prepared using preset, which is registered 
-    by name
-    """
-    import settings
-    preset = library.get(preset_name)
-    image = preset.image_processor(filename=filename, quality=preset.quality)
-    for filter_instance, args, options in preset.filters:
-        if isinstance(filter_instance, str):
-            getattr(image, filter_instance)(*args, **options)
-        else:
-            image.process(filter_instance, *args, **options)
-    filename, ext = os.path.splitext(os.path.split(image.filename)[1])
-    pattern_args = {'filename': filename, 'ext': ext}
-
-    outfilename = preset.file_pattern or '%(filename)s%(ext)s' 
-    outfilename = outfilename % pattern_args
-    outdir = preset.output_dir or (os.path.join(settings.PRESETS_ROOT, 
-        preset_name))
-    if not os.path.isdir(outdir):
-        os.makedirs(outdir, 0777)
-    image.preset_name = preset_name
-    
-    image.save(outfile=os.path.join(outdir, outfilename))
-    return image
+    def get_image(self, file):
+        if self.cached:
+            return self.cache.get_image(self.processor, file,
+                   self._compute_dest_path(file))
+        return self.processor.process(file).save(self._compute_dest_path(file))
+        
+    def get_image_file(self, file):
+        if self.cached:
+            return self.cache.get_image_file(self.processor, file,
+                    self._compute_dest_path(file))
+        return self.processor.process(file).save(self._compute_dest_path(file)).filename
 
 
-
-class Library(object):
+class PresetsRegistry(object):
     """
     Class that represents presets registry
     """
@@ -104,10 +90,13 @@ class Library(object):
         return self.presets[name]
 
 
-# library represents default presets registry
+__default_presets = PresetsRegistry()
 
-library = Library()
+def create_preset(name, processor, cached=True, output_dir=None):
+    __default_presets.register_once(name, Preset(name, processor, cached=cached, output_dir=output_dir))
 
+def remove_preset(name):
+    __default_presets.unregister(name)
 
-def filter(filter, *args, **kwargs):
-    return (filter, args, kwargs)
+def get_preset(name):
+    return __default_presets.get(name)

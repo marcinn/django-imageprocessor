@@ -17,8 +17,6 @@ example usage:
 """
 
 from PIL import Image 
-from filters import library
-import hashlib
 import os
 
 
@@ -28,7 +26,7 @@ class ImageProcessor(object):
     rendering is executed after first call of render() or save() methods
     """
 
-    def __init__(self, output_dir=None, quality=75):
+    def __init__(self, filters=None, output_dir=None, quality=75):
         """
         initializes processor for image file
         you can also set output quality (JPEG)
@@ -37,7 +35,7 @@ class ImageProcessor(object):
         self.output_dir = output_dir
         self.rendered_image = None
         self.quality = quality 
-        self.filters = []
+        self.filters = filters or []
 
     def process(self, filename):
         """
@@ -106,61 +104,3 @@ class ImageProcessor(object):
         return self
 
 
-class CachedImageProcessor(ImageProcessor):
-    """
-    Same as ImageProcessor, but using cache.
-
-    This processor can check cache for already rendered image
-    and returns destination image without processing.
-    """
-
-    def __init__(self, *args, **kwargs):
-        """
-        initializes cached processor
-        you can specify cache_dir 
-        """
-        super(CachedImageProcessor, self).__init__(*args, **kwargs)
-        self.cached = False
-        self.cache_file = None # output filename
-
-    def save(self, outfile=None):
-        """
-        saves rendered image if not cached or outfile is provided
-        """
-        autocache_file = self._get_cache_file()
-        outfile = outfile or autocache_file
-        self.cache_file = outfile
-        if not self.rendered_image:
-            self.render()
-        if (self.cached and autocache_file != outfile) or not self.cached:
-            return super(CachedImageProcessor, self).save(outfile=outfile)
-        self.filename = self.cache_file
-        return self
-
-    def _get_cache_file(self):
-        """
-        automatically generates cache filename
-        """
-        filename = str(hashlib.md5(str(self.quality) + self.filename + str(os.path.getsize(self.filename)) + make_filters_hash(self.filters) + self.filename).hexdigest())
-        filename += os.path.splitext(self.filename)[1]
-        return os.path.join(self.output_dir or os.path.dirname(self.filename), filename)
-
-    def render(self):
-        """
-        applies filters to image if needed
-        but if cached it only opens already rendered (cached) image
-        """
-        if not self.cache_file:
-            """
-            rendering cached image firstly checks for already generated image
-            but if output filename is not set, render should fail
-            """
-            raise RuntimeError('Cache filename not set. Cannot render.')
-
-        if os.path.exists(self.cache_file):
-            self.cached = True
-            self.rendered_image = Image.open(self.cache_file)
-            return self
-
-        self.cached = False
-        return super(CachedImageProcessor,self).render()

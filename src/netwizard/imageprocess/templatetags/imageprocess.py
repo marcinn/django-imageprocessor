@@ -1,4 +1,4 @@
-from netwizard.imageprocess.presets import get_preset_image
+from netwizard.imageprocess.presets import get_preset
 from PIL import Image
 from netwizard.imageprocess import settings
 from netwizard.imageprocess.cache import ImageCache
@@ -59,6 +59,7 @@ def thumbnail_url(parser, token):
 
 @register.simple_tag
 def image_from_preset(file, preset_name):
-    return u'%s%s/%s' % (settings.PRESETS_PREFIX, str(preset_name),
-        os.path.basename(get_preset_image(os.path.join(settings.MEDIA_ROOT,str(file)), 
-            str(preset_name)).filename))
+    preset = get_preset(str(preset_name))
+    outfile = preset.get_image_file(os.path.join(settings.MEDIA_ROOT, str(file)))
+    return u'%s%s/%s' % (settings.PRESETS_PREFIX, 
+            str(preset_name), os.path.basename(outfile))

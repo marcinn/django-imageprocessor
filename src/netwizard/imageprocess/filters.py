@@ -1,74 +1,9 @@
 """ 
 @author Marcin Nowak (marcin.j.nowak@gmail.com)
 
-This module provides extra-filters and filters registry
-that provides easy access to filters and modifiers by name
+This module provides extra image filters
 """
 
-from PIL import Image 
-from PIL import ImageEnhance
-from PIL import ImageChops
-
-
-class FiltersRegistry(object):
-    def __init__(self):
-        self.filters = {}
-
-    def register(self, name, filter):
-        if self.filters.has_key(name):
-            raise KeyError('Filter "%s" is already registered')
-        self.filters[name] = filter
-
-    def unregister(self, name_or_instance):
-        if isinstance(name_or_instance, str):
-            self.filters.pop(name_or_instance)
-        else:
-            for name, filter in self.filters.items():
-                if filter == name_or_instance:
-                    self.filters.pop(name)
-
-    def register_once(self, name, filter):
-        try:
-            return self.register(name, filter)
-        except KeyError:
-            pass
-
-    def get(self, name):
-        return self.filters[name]
-
-
-# system-wide filters registry
-
-library = FiltersRegistry()
-
-
-# Common PIL filters
-
-
-library.register('rotate',     Image.Image.rotate)       # use built-in func as rotate filter
-library.register('thumbnail',  Image.Image.thumbnail)    # use built-in func as thumbnail filter
-
-# PIL`s common enhance wrappers
-
-
-def grayscale(image, *args, **kwargs):
-    return ImageEnhance.Color(image).enhance(0)
-
-library.register('grayscale', grayscale)
-
-
-# PIL`s common channel operations
-
-library.register('invert', ImageChops.invert)
-library.register('multiply', ImageChops.multiply)
-library.register('screen', ImageChops.screen)
-library.register('add', ImageChops.add)
-library.register('subtract', ImageChops.subtract)
-library.register('blend', ImageChops.blend)
-library.register('composite', ImageChops.composite)
-
-
-# custom filters
 
 def watermark(im, mark, position=('right','bottom',), opacity=1.0):
     """
@@ -94,4 +29,8 @@ def watermark(im, mark, position=('right','bottom',), opacity=1.0):
     return Image.composite(layer, im, layer)
        
 
-library.register('watermark', watermark)
+def filter_spec(filter_instance, *args, **kwargs):
+    """
+    helper for easy adding filters as init arg for processor
+    """
+    return (filter_instance, args, kwargs)

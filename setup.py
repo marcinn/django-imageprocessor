@@ -9,5 +9,13 @@ setup(name='django-imageprocessor',
         packages=find_packages(),
         include_package_data=True,
         zip_safe=False,
+        classifiers=[
+        'Development Status :: 3 - Alpha',
+        'Environment :: Web Environment',
+        'Intended Audience :: Developers',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Framework :: Django',
+        ],
         )
 

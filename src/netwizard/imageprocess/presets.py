@@ -11,20 +11,20 @@ class Preset(object):
     and optional output place
     """
 
-    def __init__(self, image_class, filters=None, \
+    def __init__(self, image_processor, filters=None, \
             output_dir=None, file_pattern=None, quality=None):
         """
-        initializes preset with specified image class,
+        initializes preset with specified image processor class,
         filters set, quality, and output file settings
         """
         self.filters = filters
-        self.image_class = image_class
+        self.image_processor = image_processor
         self.output_dir = output_dir
         self.file_pattern = file_pattern
         self.quality = quality
 
     def __repr__(self):
-        return '[%s], %d filters, output=%s' % (self.image_class,
+        return '[%s], %d filters, output=%s' % (self.image_processor,
                 len(self.filters), os.path.join(self.output_dir,
                     self.file_pattern))
             
@@ -38,7 +38,7 @@ def get_preset_image(filename, preset_name):
     """
     import settings
     preset = library.get(preset_name)
-    image = preset.image_class(filename=filename, quality=preset.quality)
+    image = preset.image_processor(filename=filename, quality=preset.quality)
     for filter_instance, args, options in preset.filters:
         if isinstance(filter_instance, str):
             getattr(image, filter_instance)(*args, **options)

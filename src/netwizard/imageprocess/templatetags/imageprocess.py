@@ -1,6 +1,7 @@
-from netwizard.imageprocess import helpers 
+from netwizard.imageprocess.presets import get_preset_image
+from netwizard.imageprocess import settings
+from netwizard.imageprocess.processors import CachedImageProcessor
 from django.template import Library, Node, TemplateSyntaxError
-from django.conf import settings
 import os
 
 register = Library()
@@ -20,7 +21,9 @@ class ThumbnailUrlNode(Node):
         if not os.path.isabs(path):
             path = os.path.join(settings.MEDIA_ROOT, path)
         try:
-            return helpers.thumbnail_url(path, size, **resolved_options)
+            return '%s%s' % (settings.THUMBNAIL_PREFIX, os.path.basename(
+                CachedImageProcessor(path, output_dir=settings.THUMBNAIL_ROOT).thumbnail(size, \
+                    **resolved_options).save().filename))
         except IOError:
             return None
 
@@ -49,5 +52,7 @@ def thumbnail_url(parser, token):
 
 
 @register.simple_tag
-def image_from_preset(file, preset):
-    return helpers.url_from_preset(os.path.join(settings.MEDIA_ROOT, str(file)), str(preset))
+def image_from_preset(file, preset_name):
+    return u'%s%s/%s' % (settings.PRESETS_PREFIX, str(preset_name),
+        os.path.basename(get_preset_image(os.path.join(settings.MEDIA_ROOT,str(file)), 
+            str(preset_name)).filename))

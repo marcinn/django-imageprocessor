@@ -109,3 +109,5 @@ class Library(object):
 library = Library()
 
 
+def filter(filter, *args, **kwargs):
+    return (filter, args, kwargs)

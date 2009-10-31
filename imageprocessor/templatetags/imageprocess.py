@@ -29,7 +29,9 @@ class ThumbnailUrlNode(Node):
             processor.add_filter(Image.Image.thumbnail, size, resample=Image.ANTIALIAS)
             return '%s%s' % (settings.THUMBNAIL_PREFIX, os.path.basename(
                 self.thumbnails_cache.get_image_file(processor, path)))
-        except IOError:
+        except IOError, e:
+            if settings.settings.DEBUG:
+                raise e
             return None
 
 

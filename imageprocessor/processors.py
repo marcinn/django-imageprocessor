@@ -57,7 +57,7 @@ class ImageProcessor(object):
                 # some filters returns a copy of an image, so check it
                 # and replace image resource
                 if isinstance(result, Image.Image):
-                    img.im = result.im
+                    img = result
             self.rendered_image = img
         return self
 

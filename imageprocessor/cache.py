@@ -28,6 +28,8 @@ class ImageCache(object):
 
     def __init__(self, cache_dir):
         self.cache_dir = cache_dir
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
 
     def get_image(self, processor, source, cache=None):
         """

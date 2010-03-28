@@ -9,3 +9,5 @@ JPEG_QUALITY = getattr(settings, 'IMAGEPROCESS_JPEG_QUALITY', 75)
 
 PRESETS_PREFIX = getattr(settings, 'IMAGEPROCESS_PRESETS_PREFIX', 'presets/')
 PRESETS_ROOT = getattr(settings, 'IMAGEPROCESS_PRESETS_ROOT', os.path.join(settings.MEDIA_ROOT, 'presets'))
+
+FAIL_SILENTLY = getattr(settings, 'IMAGEPROCESS_FAIL_SILENTLY', True)

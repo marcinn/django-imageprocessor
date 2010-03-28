@@ -29,10 +29,10 @@ class ThumbnailUrlNode(Node):
             processor.add_filter(Image.Image.thumbnail, size, resample=Image.ANTIALIAS)
             return '%s%s' % (settings.THUMBNAIL_PREFIX, os.path.basename(
                 self.thumbnails_cache.get_image_file(processor, path)))
-        except IOError, e:
-            if settings.settings.DEBUG:
+        except (IOError, OSError), e:
+            if not settings.FAIL_SILENTLY:
                 raise e
-            return None
+            return ''
 
 
 @register.tag(name='thumbnail_url')
@@ -60,7 +60,12 @@ def thumbnail_url(parser, token):
 
 @register.simple_tag
 def image_from_preset(file, preset_name):
-    preset = get_preset(str(preset_name))
-    outfile = preset.get_image_file(os.path.join(settings.MEDIA_ROOT, str(file)))
-    return u'%s%s/%s' % (settings.PRESETS_PREFIX, 
-            str(preset_name), os.path.basename(outfile))
+    try:
+        preset = get_preset(str(preset_name))
+        outfile = preset.get_image_file(os.path.join(settings.MEDIA_ROOT, str(file)))
+        return u'%s%s/%s' % (settings.PRESETS_PREFIX, 
+                str(preset_name), os.path.basename(outfile))
+    except (IOError, OSError), e:
+        if not settings.FAIL_SILENTLY:
+            raise e
+        return ''

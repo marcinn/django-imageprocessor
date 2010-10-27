@@ -1,9 +1,9 @@
-from imageprocessor.presets import get_preset
+import os
+from django.template import Library, Node, TemplateSyntaxError, Variable
 from PIL import Image
+from imageprocessor.presets import get_preset
 from imageprocessor import settings, ImageProcessor
 from imageprocessor.cache import ImageCache
-from django.template import Library, Node, TemplateSyntaxError
-import os
 
 register = Library()
 
@@ -58,14 +58,57 @@ def thumbnail_url(parser, token):
     return ThumbnailUrlNode(file, (width, height), options)
 
 
-@register.simple_tag
-def image_from_preset(file, preset_name):
-    try:
-        preset = get_preset(str(preset_name))
-        outfile = preset.get_image_file(os.path.join(settings.MEDIA_ROOT, str(file)))
-        return u'%s%s/%s' % (settings.PRESETS_PREFIX, 
-                str(preset_name), os.path.basename(outfile).decode('utf-8'))
-    except (IOError, OSError), e:
-        if not settings.FAIL_SILENTLY:
-            raise e
-        return ''
+class ImageFromPresetNode(Node):
+    def __init__(self, path, preset_name, cast_as=None):
+        self.path = Variable(path)
+        self.preset_name = Variable(preset_name)
+        self.cast_as = cast_as
+
+    def render(self, context):
+        try:
+            preset_name = str(self.preset_name.resolve(context))
+            path = str(self.path.resolve(context))
+            preset = get_preset(preset_name)
+            if os.path.isabs(path):
+                source = path
+            else:
+                source = os.path.join(settings.MEDIA_ROOT, path)
+
+            image = preset.get_image(source)
+
+            url = u'%s%s%s/%s' % (settings.MEDIA_URL, settings.PRESETS_PREFIX,
+                preset_name, os.path.basename(image.filename).decode('utf-8'))
+                
+            if self.cast_as:
+                width, height = image.size
+                context[self.cast_as] = {
+                        'url': url,
+                        'width': width,
+                        'height': height,
+                        'file': image.filename,
+                        }
+                return ''
+            return url
+        except (IOError, OSError), e:
+            if not settings.FAIL_SILENTLY:
+                raise e
+            if self.cast_as:
+                context[self.cast_as] = ''
+            return ''
+
+@register.tag
+def image_from_preset(parser, token):
+    bits = token.contents.split(' ')
+    if len(bits) < 3:
+        raise TemplateSyntaxError("'%s' takes at least two arguments"
+                                  " (image path, preset name)" % bits[0])
+    path, preset = bits[1:3]
+    cast_as = None
+    if len(bits)>4:
+        if bits[3]!='as':
+            raise TemplateSyntaxError(
+                "Usage: '%s' imagepath preset_name [as value]" % bits[0])
+        cast_as = bits[4]
+
+    return ImageFromPresetNode(path, preset, cast_as)
+

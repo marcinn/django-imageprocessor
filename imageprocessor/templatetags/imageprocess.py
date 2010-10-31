@@ -1,9 +1,8 @@
 import os
 from django.template import Library, Node, TemplateSyntaxError, Variable
 from PIL import Image
-from imageprocessor.presets import get_preset
-from imageprocessor import settings, ImageProcessor
-from imageprocessor.cache import ImageCache
+from imageprocessor import process_image, get_cached_image, ImageProcessor, ImageCache
+from imageprocessor import settings
 
 register = Library()
 
@@ -68,18 +67,17 @@ class ImageFromPresetNode(Node):
         try:
             preset_name = str(self.preset_name.resolve(context))
             path = str(self.path.resolve(context))
-            preset = get_preset(preset_name)
             if os.path.isabs(path):
                 source = path
             else:
                 source = os.path.join(settings.MEDIA_ROOT, path)
 
-            image = preset.get_image(source)
+            image = get_cached_image(preset_name, source)
 
-            url = u'%s%s%s/%s' % (settings.MEDIA_URL, settings.PRESETS_PREFIX,
-                preset_name, os.path.basename(image.filename).decode('utf-8'))
                 
             if self.cast_as:
+                url = u'%s%s%s/%s' % (settings.MEDIA_URL, settings.PRESETS_PREFIX,
+                    preset_name, os.path.basename(image.filename).decode('utf-8'))
                 width, height = image.size
                 context[self.cast_as] = {
                         'url': url,
@@ -88,6 +86,8 @@ class ImageFromPresetNode(Node):
                         'file': image.filename,
                         }
                 return ''
+            url = u'%s%s/%s' % (settings.PRESETS_PREFIX,
+                preset_name, os.path.basename(image.filename).decode('utf-8'))
             return url
         except (IOError, OSError), e:
             if not settings.FAIL_SILENTLY:

@@ -6,6 +6,7 @@ module provides ImageProcessor class for batch processing images
 
 from PIL import Image 
 import os
+from presets import Filter as filter_spec # bc
 
 
 class ImageProcessor(object):
@@ -38,7 +39,10 @@ class ImageProcessor(object):
         adds filter with paramters to filters queue
         """
         self.rendered_image = None
-        self.filters.append( (filter_instance, args, kwargs) )
+        if isinstance(filter_instance, (list, tuple)):
+            self.filters.append(filter_instance)
+        else:
+            self.filters.append( (filter_instance, args, kwargs) )
         return self
 
     def render(self):
@@ -52,8 +56,8 @@ class ImageProcessor(object):
                 raise 'Image file not selected'
             img = Image.open(self.filename)
             self.transparency = img.info.get('transparency', None)
-            for filter_instance, args, kwargs in self.filters:
-                result = filter_instance(img, *args, **kwargs)
+            for filter_instance, _args, kwargs in self.filters:
+                result = filter_instance(img, *_args, **kwargs)
                 # some filters returns a copy of an image, so check it
                 # and replace image resource
                 if isinstance(result, Image.Image):
@@ -93,8 +97,9 @@ class ImageProcessor(object):
 
 
 
-def filter_spec(filter_instance, *args, **kwargs):
-    """
-    helper for easy adding filters as init arg for processor
-    """
-    return (filter_instance, args, kwargs)
+
+def imageprocessor_from_preset(preset):
+    processor = ImageProcessor(filters=preset.filters, 
+            output_dir=preset.output_dir,
+            quality=preset.quality)
+    return processor

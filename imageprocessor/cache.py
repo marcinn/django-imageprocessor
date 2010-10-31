@@ -33,22 +33,18 @@ class ImageCache(object):
 
     def get_image(self, processor, source, cache=None):
         """
-        returns processed PIL Image retrieved from cache 
-        or generated using processor
-
-        @todo: needs refactoring
+        returns CachedImage retrieved from cache or None
         """
         cache = cache or self._get_cache_filename(processor, source)
         cache_path = os.path.join(self.cache_dir, cache)
         if os.path.exists(cache_path):
-            return Image.open(cache_path)
-        return processor.process(source).save(cache_path).rendered_image
+            return CachedImage(cache_path)
         
     def get_image_file(self, processor, source, cache=None):
         """
         returns processed PIL Image file path retrieved from cache 
         or generated using processor
-
+        @deprecated
         @todo: needs refactoring
         """
         cache = cache or self._get_cache_filename(processor, source)
@@ -67,4 +63,22 @@ class ImageCache(object):
                 + make_filters_hash(processor.filters) \
                 + source).hexdigest()), os.path.splitext(source)[1])
 
-        
+
+class CachedImage(object):
+    def __init__(self, filename):
+        self.filename = filename
+        self._image = None
+    
+    def __getattr__(self, k):
+        if not self._image:
+            self._image = Image.open(self.filename)
+        return getattr(self._image, k)
+
+    @property
+    def width(self):
+        return self.size[0]
+
+    @property
+    def height(self):
+        return self.size[1]
+

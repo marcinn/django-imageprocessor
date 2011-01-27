@@ -9,6 +9,13 @@ from PIL import Image
 import os
 
 
+def source_changed(source, cache):
+    """
+    returns True if source was changed (cache revalidation is needed)
+    """
+    return os.path.getmtime(source)>os.path.getmtime(cache)
+
+
 def make_filters_hash(filters):
     """
     compute filters hash
@@ -49,7 +56,7 @@ class ImageCache(object):
         """
         cache = cache or self._get_cache_filename(processor, source)
         cache_path = os.path.join(self.cache_dir, cache)
-        if not os.path.exists(cache_path):
+        if not os.path.exists(cache_path) or source_changed(source, cache):
             processor.process(source).save(cache_path)
         return cache_path
         

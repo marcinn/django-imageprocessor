@@ -68,7 +68,8 @@ class ImageCache(object):
         return '%s%s' % (str(hashlib.md5(str(processor.quality) + source\
                 + str(os.path.getsize(source)) \
                 + make_filters_hash(processor.filters) \
-                + source).hexdigest()), os.path.splitext(source)[1])
+                + source.encode('utf-8')).hexdigest()),
+                os.path.splitext(source)[1])
 
 
 class CachedImage(object):
